@@ -1,4 +1,6 @@
+const _ = require("lodash");
 const superagent = require("superagent");
+const wallet = require('./wallet');
 const { getConfig } = require("../utils/config-loader");
 const { logger } = require("../utils/logger");
 const { getBaseOptions } = require("../utils/api-utils");
@@ -486,7 +488,6 @@ const getSubscriptions = async () => {
     const data = response.body;
 
     if (data.success) {
-      // console.log('Your Subscriptions:', data.store_ids);
       return data.store_ids;
     }
 
@@ -575,7 +576,7 @@ const getkeys = async ({ storeId }) => {
   }
 
   logger.info(
-    `Unable to find store data for ${storeId} at root ${rootHash || "latest"}`
+    `Unable to find store data for ${storeId}`
   );
   return false;
 };

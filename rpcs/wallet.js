@@ -72,15 +72,17 @@ const waitForAllTransactionsToConfirm = async () => {
   return true;
 };
 
-const hasUnconfirmedTransactions = async ({
-  walletId = CONFIG.DEFAULT_WALLET_ID,
-}) => {
+const hasUnconfirmedTransactions = async (
+  options = {
+    walletId: CONFIG.DEFAULT_WALLET_ID,
+  }
+) => {
   const { cert, key, timeout } = getBaseOptions();
 
   const response = await superagent
     .post(`${CONFIG.WALLER_HOST}/get_transactions`)
     .send({
-      wallet_id: walletId,
+      wallet_id: options.walletId,
       sort_key: "RELEVANCE",
     })
     .key(key)
@@ -90,11 +92,7 @@ const hasUnconfirmedTransactions = async ({
   const data = JSON.parse(response.text);
 
   if (data.success) {
-    console.log(
-      `Pending confirmations: ${
-        data.transactions.filter((transaction) => !transaction.confirmed).length
-      }`
-    );
+    console.log('Pending confirmation detected');
 
     return data.transactions.some((transaction) => !transaction.confirmed);
   }
@@ -102,10 +100,12 @@ const hasUnconfirmedTransactions = async ({
   return false;
 };
 
-const getPublicAddress = async (options = {
-  newAddress: false,
-  walletId: CONFIG.DEFAULT_WALLET_ID,
-}) => {
+const getPublicAddress = async (
+  options = {
+    newAddress: false,
+    walletId: CONFIG.DEFAULT_WALLET_ID,
+  }
+) => {
   const { cert, key, timeout } = getBaseOptions();
 
   const response = await superagent

@@ -13,8 +13,28 @@ const decodeDataLayerResponse = (data) => {
   }));
 };
 
+const keyValueToChangeList = (key, value, includeDelete) => {
+  const changeList = [];
+
+  if (includeDelete) {
+    changeList.push({
+      action: "delete",
+      key: encodeHex(key),
+    });
+  }
+
+  changeList.push({
+    action: "insert",
+    key: encodeHex(key),
+    value: encodeHex(value),
+  });
+
+  return changeList;
+};
+
 module.exports = {
   encodeHex,
   decodeHex,
   decodeDataLayerResponse,
+  keyValueToChangeList,
 };

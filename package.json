@@ -1,5 +1,5 @@
 {
-  "name": "chia-http-server",
+  "name": "chia-web2-gateway",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
