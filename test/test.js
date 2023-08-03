@@ -6,35 +6,42 @@ const {
   createDataLayerStore,
 } = require("../rpcs/datalayer");
 
+const walkDir = function (dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  files.forEach(function (file) {
+    if (fs.statSync(path.join(dir, file)).isDirectory()) {
+      fileList = walkDir(path.join(dir, file), fileList);
+    } else {
+      fileList.push(path.join(dir, file));
+    }
+  });
+  return fileList;
+};
+
 const run = async () => {
   const testStoreId = await createDataLayerStore();
   console.log(`Created test store with id: ${testStoreId}`);
-  const htmlContent = fs.readFileSync(
-    path.join(__dirname, "public", "index.html"),
-    "utf8"
-  );
 
-  const cssContent = fs.readFileSync(
-    path.join(__dirname, "public", "style.css"),
-    "utf8"
-  );
+  const files = walkDir(path.join(__dirname, "public"));
 
-  // Load the image file into a Buffer
-  const imageBuffer = fs.readFileSync(
-    path.join(__dirname, "public", "assets", "logo.png")
-  );
+  const changeList = [];
 
-  // Convert the image Buffer to a base64 string
-  const imageBase64 = imageBuffer.toString("base64");
-
-  // Add the MIME type and base64 indicator to the start of the base64 string
-  const imageDataUrl = `data:image/png;base64,${imageBase64}`;
-
-  const changeList = [
-    ...keyValueToChangeList("index.html", htmlContent),
-    ...keyValueToChangeList("style.css", cssContent),
-    ...keyValueToChangeList("assets/logo.png", imageDataUrl),
-  ];
+  for (const filePath of files) {
+    let content;
+    if (path.extname(filePath) === ".png") {
+      const imageBuffer = fs.readFileSync(filePath);
+      const imageBase64 = imageBuffer.toString("base64");
+      content = `data:image/png;base64,${imageBase64}`;
+    } else {
+      content = fs.readFileSync(filePath, "utf8");
+    }
+    changeList.push(
+      ...keyValueToChangeList(
+        path.relative(path.join(__dirname, "public"), filePath),
+        content
+      )
+    );
+  }
 
   console.log("Pushing change list to datalayer...", changeList);
   await pushChangeListToDataLayer(testStoreId, changeList);
