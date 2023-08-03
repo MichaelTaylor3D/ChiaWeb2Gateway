@@ -13,10 +13,10 @@ const decodeDataLayerResponse = (data) => {
   }));
 };
 
-const keyValueToChangeList = (key, value, includeDelete) => {
+const keyValueToChangeList = (key, value, options) => {
   const changeList = [];
 
-  if (includeDelete) {
+  if (options?.includeDelete) {
     changeList.push({
       action: "delete",
       key: encodeHex(key),
@@ -26,7 +26,7 @@ const keyValueToChangeList = (key, value, includeDelete) => {
   changeList.push({
     action: "insert",
     key: encodeHex(key),
-    value: encodeHex(value),
+    value: options.encode ? encodeHex(value) : value,
   });
 
   return changeList;

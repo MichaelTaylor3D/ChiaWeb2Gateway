@@ -27,18 +27,15 @@ const run = async () => {
   const changeList = [];
 
   for (const filePath of files) {
-    let content;
-    if (path.extname(filePath) === ".png") {
-      const imageBuffer = fs.readFileSync(filePath);
-      const imageBase64 = imageBuffer.toString("base64");
-      content = `data:image/png;base64,${imageBase64}`;
-    } else {
-      content = fs.readFileSync(filePath, "utf8");
-    }
+    const contentBuffer = fs.readFileSync(filePath);
+    const content = contentBuffer.toString("hex");
     changeList.push(
       ...keyValueToChangeList(
-        path.relative(path.join(__dirname, "public"), filePath),
-        content
+        path
+          .relative(path.join(__dirname, "public"), filePath)
+          .replace(/\\/g, "/"),
+        content,
+        { encoded: true }
       )
     );
   }

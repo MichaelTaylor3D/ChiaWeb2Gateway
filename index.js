@@ -90,6 +90,7 @@ app.get("/:storeId/*", async (req, res) => {
 app.get("/:storeId", async (req, res) => {
   try {
     const { storeId } = req.params;
+    const { showKeys } = req.query;
 
     // A referrer indicates that the user is trying to access the store from a website
     // we want to redirect them so that the URL includes the storeId in the path
@@ -109,7 +110,7 @@ app.get("/:storeId", async (req, res) => {
     );
 
     // If index.html is in the store treat this endpoint like a website
-    if (apiResponse.length && apiResponse.includes("index.html")) {
+    if (apiResponse.length && apiResponse.includes("index.html") && !showKeys) {
       const hexKey = hexUtils.encodeHex("index.html");
       const dataLayerResponse = await datalayer.getValue({
         storeId,
