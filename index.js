@@ -85,6 +85,8 @@ app.get("/:storeId/*", async (req, res) => {
       return res.send(value);
     }
   } catch (error) {
+    // If the key is not found and the store is empty we want to redirect the user to the store
+    // This adds support for SPA's hosted on datalayer
     res.location(`/${storeId}`);
     res.status(301).end();
   }
