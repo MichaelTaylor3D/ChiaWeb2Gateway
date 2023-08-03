@@ -40,10 +40,10 @@ app.get("/.well-known", async (req, res) => {
 });
 
 app.get("/:storeId/*", async (req, res) => {
-  try {
-    const storeId = req.params.storeId;
-    const key = req.params[0];
+  const storeId = req.params.storeId;
+  const key = req.params[0];
 
+  try {
     // A referrer indicates that the user is trying to access the store from a website
     // we want to redirect them so that the URL includes the storeId in the path
     const refererUrl = req.headers.referer;
@@ -59,11 +59,19 @@ app.get("/:storeId/*", async (req, res) => {
       key: hexKey,
     });
 
+    if (!dataLayerResponse) {
+      throw new Error("Key not found");
+    }
+
     const value = hexUtils.decodeHex(dataLayerResponse.value);
 
     const fileExtension = getFileExtension(key);
 
-    if (isValidJSON(value)) {
+    if (fileExtension) {
+      const mimeType = mimeTypes[fileExtension] || "application/octet-stream";
+      res.setHeader("Content-Type", mimeType);
+      return res.send(value);
+    } else if (isValidJSON(value)) {
       return res.json(JSON.parse(value));
     } else if (isBase64Image(value)) {
       const base64Image = value.split(";base64,").pop();
@@ -73,17 +81,12 @@ app.get("/:storeId/*", async (req, res) => {
       res.type(mimeType);
 
       return res.send(imageBuffer);
-    } else if (fileExtension) {
-      const mimeType = mimeTypes[fileExtension] || "application/octet-stream";
-      res.setHeader("Content-Type", mimeType);
-      return res.send(value);
     } else {
       return res.send(value);
     }
   } catch (error) {
-    res.status(500).json({
-      error: "Can not retrieve data or it doesn't exist on this node",
-    });
+    res.location(`/${storeId}`);
+    res.status(301).end();
   }
 });
 
