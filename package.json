@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "chiaweb2": "./server.js"
+  },
   "scripts": {
     "start": "node index.js"
   },
@@ -15,6 +18,7 @@
     "lodash": "^4.17.21",
     "superagent": "^8.0.9",
     "winston": "^3.10.0",
-    "winston-daily-rotate-file": "^4.7.1"
+    "winston-daily-rotate-file": "^4.7.1",
+    "yargs": "^17.7.2"
   }
 }

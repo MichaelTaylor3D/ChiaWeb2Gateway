@@ -11,10 +11,24 @@ const {
   getFileExtension,
   mimeTypes,
 } = require("./utils/api-utils");
-const { getConfig } = require("./utils/config-loader");
-const CONFIG = getConfig();
 
 app.use(cors());
+
+const multipartCache = {};
+
+let config = {
+  DATALAYER_HOST: "https://localhost:8562",
+  WALLET_HOST: "https://localhost:9256",
+  CERTIFICATE_FOLDER_PATH: "~/.chia/mainnet/config/ssl",
+  WEB2_GATEWAY_PORT: 41410,
+  WEB2_BIND_ADDRESS: "localhost",
+  DEFAULT_WALLET_ID: 1,
+  MAXIMUM_RPC_PAYLOAD_SIZE: 26214400,
+};
+
+function configure(newConfig) {
+  config = { ...config, ...newConfig };
+}
 
 app.get("/", async (req, res) => {
   return res.json({
@@ -31,7 +45,7 @@ app.get("/.well-known", async (req, res) => {
   // Ideally we want to check the balance of the the current address and
   // only return it if its zero, if its not zero we want to get the next unused address and
   // return that. But I need to research how to check the balance of a single address.
-  const publicAddress = await wallet.getPublicAddress();
+  const publicAddress = await wallet.getPublicAddress(config);
   res.json({
     xch_address: publicAddress,
     donation_address:
@@ -54,20 +68,54 @@ app.get("/:storeId/*", async (req, res) => {
     }
 
     const hexKey = hexUtils.encodeHex(key);
-    const dataLayerResponse = await datalayer.getValue({
+    const dataLayerResponse = await datalayer.getValue(config, {
       storeId,
       key: hexKey,
     });
 
     if (!dataLayerResponse) {
-      throw new Error("Key not found");
+      throw new Error(`Key not found ${key}`);
     }
 
     const value = hexUtils.decodeHex(dataLayerResponse.value);
-
     const fileExtension = getFileExtension(key);
 
-    if (fileExtension) {
+    if (isValidJSON(value) && JSON.parse(value)?.type === "multipart") {
+      const mimeType = mimeTypes[fileExtension] || "application/octet-stream";
+      let multipartFileNames = JSON.parse(value).parts;
+      const cacheKey = multipartFileNames.sort().join(",");
+
+      multipartFileNames = multipartFileNames.sort((a, b) => {
+        const numberA = parseInt(a.split(".part")[1]);
+        const numberB = parseInt(b.split(".part")[1]);
+        return numberA - numberB;
+      });
+
+      if (multipartCache[cacheKey]) {
+        console.log("Serving from cache");
+        res.setHeader("Content-Type", mimeType);
+        return res.end(multipartCache[cacheKey]);
+      }
+
+      const hexPartsPromises = multipartFileNames.map((fileName) => {
+        console.log(`Stitching ${fileName}`);
+        const hexKey = hexUtils.encodeHex(fileName);
+        return datalayer.getValue(config, {
+          storeId,
+          key: hexKey,
+        });
+      });
+
+      const dataLayerResponses = await Promise.all(hexPartsPromises);
+      const hexParts = dataLayerResponses.map((response) => response.value);
+
+      const resultHex = hexParts.join("");
+      const resultBuffer = Buffer.from(resultHex, "hex");
+      multipartCache[cacheKey] = resultBuffer;
+
+      res.setHeader("Content-Type", mimeType);
+      return res.end(resultBuffer);
+    } else if (fileExtension) {
       const mimeType = mimeTypes[fileExtension] || "application/octet-stream";
       res.setHeader("Content-Type", mimeType);
       return res.send(value);
@@ -85,6 +133,7 @@ app.get("/:storeId/*", async (req, res) => {
       return res.send(value);
     }
   } catch (error) {
+    console.log(error);
     // If the key is not found and the store is empty we want to redirect the user to the store
     // This adds support for SPA's hosted on datalayer
     res.location(`/${storeId}`);
@@ -95,7 +144,7 @@ app.get("/:storeId/*", async (req, res) => {
 app.get("/:storeId", async (req, res) => {
   try {
     const { storeId } = req.params;
-    const { showKeys } = req.query;
+    const { showkeys } = req.query;
 
     // A referrer indicates that the user is trying to access the store from a website
     // we want to redirect them so that the URL includes the storeId in the path
@@ -106,7 +155,7 @@ app.get("/:storeId", async (req, res) => {
       return;
     }
 
-    const dataLayerResponse = await datalayer.getkeys({
+    const dataLayerResponse = await datalayer.getkeys(config, {
       storeId,
     });
 
@@ -115,9 +164,9 @@ app.get("/:storeId", async (req, res) => {
     );
 
     // If index.html is in the store treat this endpoint like a website
-    if (apiResponse.length && apiResponse.includes("index.html") && !showKeys) {
+    if (apiResponse.length && apiResponse.includes("index.html") && !showkeys) {
       const hexKey = hexUtils.encodeHex("index.html");
-      const dataLayerResponse = await datalayer.getValue({
+      const dataLayerResponse = await datalayer.getValue(config, {
         storeId,
         key: hexKey,
       });
@@ -137,6 +186,18 @@ app.get("/:storeId", async (req, res) => {
   }
 });
 
-app.listen(CONFIG.HTTP_PORT, CONFIG.BIND_ADDRESS, () => {
-  console.log(`Server running at http://localhost:${CONFIG.HTTP_PORT}`);
-});
+function start() {
+  console.log(
+    `Starting web2 gateway server on port ${config.WEB2_GATEWAY_PORT}`
+  );
+  app.listen(config.WEB2_GATEWAY_PORT, config.WEB2_BIND_ADDRESS, () => {
+    console.log(
+      `DataLayer Web2 Gateway Server running, go to http://localhost:${config.WEB2_GATEWAY_PORT} to view your datalayer`
+    );
+  });
+}
+
+module.exports = {
+  start,
+  configure,
+};

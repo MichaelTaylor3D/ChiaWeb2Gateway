@@ -3,13 +3,11 @@ const path = require("path");
 const fs = require("fs");
 
 const { getChiaRoot } = require("./chia-root");
-const { getConfig } = require("./config-loader");
-const CONFIG = getConfig();
 
-const getBaseOptions = () => {
+const getBaseOptions = (config) => {
   const chiaRoot = getChiaRoot();
   let certificateFolderPath =
-    CONFIG.CERTIFICATE_FOLDER_PATH || `${chiaRoot}/config/ssl`;
+    config.CERTIFICATE_FOLDER_PATH || `${chiaRoot}/config/ssl`;
 
   // If certificateFolderPath starts with "~", replace it with the home directory
   if (certificateFolderPath.startsWith("~")) {
