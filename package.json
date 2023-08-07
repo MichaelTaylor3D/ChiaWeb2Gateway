@@ -9,8 +9,15 @@
   "scripts": {
     "start": "node index.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Michael Taylor",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MichaelTaylor3D/ChiaChangeListChunks.git"
+  },
+  "keywords": [
+    "chia-blockchain"
+  ],
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
