@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const Datalayer = require("chia-datalayer-wrapper");
+const datalayerCache = require("chia-datalayer-kv-cache");
 const wallet = require("./rpcs/wallet");
 const hexUtils = require("./utils/hex-utils");
 const defaultConfig = require("./utils/defaultConfig");
@@ -18,7 +18,7 @@ const multipartCache = {};
 
 let config = defaultConfig;
 
-const datalayer = Datalayer.rpc({
+datalayerCache.configure({
   full_node_host: config.FULL_NODE_HOST,
   datalayer_host: config.DATALAYER_HOST,
   wallet_host: config.WALLET_HOST,
@@ -81,7 +81,7 @@ app.get("/:storeId/*", async (req, res) => {
     }
 
     const hexKey = hexUtils.encodeHex(key);
-    const dataLayerResponse = await datalayer.getValue({
+    const dataLayerResponse = await datalayerCache.getValue({
       id: storeId,
       key: hexKey,
     });
@@ -113,7 +113,7 @@ app.get("/:storeId/*", async (req, res) => {
       const hexPartsPromises = multipartFileNames.map((fileName) => {
         console.log(`Stitching ${fileName}`);
         const hexKey = hexUtils.encodeHex(fileName);
-        return datalayer.getValue({
+        return datalayerCache.getValue({
           id: storeId,
           key: hexKey,
         });
@@ -175,7 +175,7 @@ app.get("/:storeId", async (req, res) => {
       return;
     }
 
-    const dataLayerResponse = await datalayer.getKeys({
+    const dataLayerResponse = await datalayerCache.getKeys({
       id: storeId,
     });
 
@@ -186,7 +186,7 @@ app.get("/:storeId", async (req, res) => {
     // If index.html is in the store treat this endpoint like a website
     if (apiResponse.length && apiResponse.includes("index.html") && !showkeys) {
       const hexKey = hexUtils.encodeHex("index.html");
-      const dataLayerResponse = await datalayer.getValue({
+      const dataLayerResponse = await datalayerCache.getValue({
         id: storeId,
         key: hexKey,
       });
