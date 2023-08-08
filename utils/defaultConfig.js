@@ -1,8 +1,10 @@
 module.exports = {
-  DATALAYER_HOST: "localhost:8562",
-  WALLER_HOST: "http://localhost:9256",
+  FULL_NODE_HOST: "https://localhost:8555",
+  DATALAYER_HOST: "https://localhost:8562",
+  WALLET_HOST: "https://localhost:9256",
   CERTIFICATE_FOLDER_PATH: "~/.chia/mainnet/config/ssl",
+  WEB2_GATEWAY_PORT: 41410,
+  WEB2_BIND_ADDRESS: "localhost",
   DEFAULT_WALLET_ID: 1,
-  HTTP_PORT: 3000,
-  BIND_ADDRESS: "localhost",
+  MAXIMUM_RPC_PAYLOAD_SIZE: 26214400,
 };

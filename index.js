@@ -1,10 +1,10 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-
+const Datalayer = require("chia-datalayer-wrapper");
 const wallet = require("./rpcs/wallet");
-const datalayer = require("./rpcs/datalayer");
 const hexUtils = require("./utils/hex-utils");
+const defaultConfig = require("./utils/defaultConfig");
 const {
   isValidJSON,
   isBase64Image,
@@ -16,15 +16,15 @@ app.use(cors());
 
 const multipartCache = {};
 
-let config = {
-  DATALAYER_HOST: "https://localhost:8562",
-  WALLET_HOST: "https://localhost:9256",
-  CERTIFICATE_FOLDER_PATH: "~/.chia/mainnet/config/ssl",
-  WEB2_GATEWAY_PORT: 41410,
-  WEB2_BIND_ADDRESS: "localhost",
-  DEFAULT_WALLET_ID: 1,
-  MAXIMUM_RPC_PAYLOAD_SIZE: 26214400,
-};
+let config = defaultConfig;
+
+const datalayer = Datalayer.rpc({
+  full_node_host: config.FULL_NODE_HOST,
+  datalayer_host: config.DATALAYER_HOST,
+  wallet_host: config.WALLET_HOST,
+  certificate_folder_path: config.CERTIFICATE_FOLDER_PATH,
+  default_wallet_id: config.DEFAULT_WALLET_ID,
+});
 
 function configure(newConfig) {
   config = { ...config, ...newConfig };
@@ -55,21 +55,34 @@ app.get("/.well-known", async (req, res) => {
 
 app.get("/:storeId/*", async (req, res) => {
   const storeId = req.params.storeId;
-  const key = req.params[0];
+  let key = req.params[0];
+
+  // Remove everything after '#'
+  if (key.includes("#")) {
+    key = key.split("#")[0];
+  }
+
+  // Remove trailing slash
+  if (key.endsWith("/")) {
+    key = key.slice(0, -1);
+  }
 
   try {
     // A referrer indicates that the user is trying to access the store from a website
     // we want to redirect them so that the URL includes the storeId in the path
     const refererUrl = req.headers.referer;
     if (refererUrl && !refererUrl.includes(storeId)) {
+      if (key.startsWith("/")) {
+        key = key.slice(1);
+      }
       res.location(`${refererUrl}/${storeId}/${key}`);
       res.status(301).end();
       return;
     }
 
     const hexKey = hexUtils.encodeHex(key);
-    const dataLayerResponse = await datalayer.getValue(config, {
-      storeId,
+    const dataLayerResponse = await datalayer.getValue({
+      id: storeId,
       key: hexKey,
     });
 
@@ -100,8 +113,8 @@ app.get("/:storeId/*", async (req, res) => {
       const hexPartsPromises = multipartFileNames.map((fileName) => {
         console.log(`Stitching ${fileName}`);
         const hexKey = hexUtils.encodeHex(fileName);
-        return datalayer.getValue(config, {
-          storeId,
+        return datalayer.getValue({
+          id: storeId,
           key: hexKey,
         });
       });
@@ -143,20 +156,27 @@ app.get("/:storeId/*", async (req, res) => {
 
 app.get("/:storeId", async (req, res) => {
   try {
-    const { storeId } = req.params;
+    let { storeId } = req.params;
     const { showkeys } = req.query;
+
+    if (storeId.endsWith("/")) {
+      storeId = storeId.slice(0, -1);
+    }
 
     // A referrer indicates that the user is trying to access the store from a website
     // we want to redirect them so that the URL includes the storeId in the path
     const refererUrl = req.headers.referer;
     if (refererUrl && !refererUrl.includes(storeId)) {
+      if (storeId.startsWith("/")) {
+        storeId = storeId.slice(1);
+      }
       res.location(`${refererUrl}/${storeId}`);
       res.status(301).end();
       return;
     }
 
-    const dataLayerResponse = await datalayer.getkeys(config, {
-      storeId,
+    const dataLayerResponse = await datalayer.getKeys({
+      id: storeId,
     });
 
     const apiResponse = dataLayerResponse.keys.map((key) =>
@@ -166,12 +186,16 @@ app.get("/:storeId", async (req, res) => {
     // If index.html is in the store treat this endpoint like a website
     if (apiResponse.length && apiResponse.includes("index.html") && !showkeys) {
       const hexKey = hexUtils.encodeHex("index.html");
-      const dataLayerResponse = await datalayer.getValue(config, {
-        storeId,
+      const dataLayerResponse = await datalayer.getValue({
+        id: storeId,
         key: hexKey,
       });
 
-      const value = hexUtils.decodeHex(dataLayerResponse.value);
+      let value = hexUtils.decodeHex(dataLayerResponse.value);
+      // Add the base tag
+      const baseTag = `<base href="/${storeId}/">`;
+      value = value.replace("<head>", `<head>\n    ${baseTag}`);
+
       // Set Content-Type to HTML and send the decoded value
       res.setHeader("Content-Type", "text/html");
       return res.send(value);

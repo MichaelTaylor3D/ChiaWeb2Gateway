@@ -2,7 +2,6 @@ const _ = require("lodash");
 const yaml = require("js-yaml");
 const fs = require("fs");
 const path = require("path");
-const { logger } = require("./logger");
 const defaultConfig = require("./defaultConfig");
 const { getApplicationDataDirectory } = require("./chia-root");
 
@@ -31,7 +30,7 @@ function createConfigurationFile(configFile) {
 
     fs.writeFileSync(configFile, yaml.dump(defaultConfig), "utf8");
   } catch (error) {
-    logger.error(`Error creating config file: ${configFile}`, error);
+    console.error(`Error creating config file: ${configFile}`, error);
   }
 }
 
@@ -40,7 +39,7 @@ function loadConfigFromYmlFile(configFile) {
     const ymlContent = fs.readFileSync(configFile, "utf8");
     return yaml.load(ymlContent);
   } catch (error) {
-    logger.error(
+    console.error(
       `Config file not found or unreadable at: ${configFile}`,
       error
     );
