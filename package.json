@@ -1,6 +1,6 @@
 {
   "name": "chia-web2-gateway",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -13,7 +13,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MichaelTaylor3D/ChiaChangeListChunks.git"
+    "url": "git+https://github.com/MichaelTaylor3D/ChiaWeb2Gateway"
   },
   "keywords": [
     "chia-blockchain"
