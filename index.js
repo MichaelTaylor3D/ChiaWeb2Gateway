@@ -28,6 +28,13 @@ datalayerCache.configure({
 
 function configure(newConfig) {
   config = { ...config, ...newConfig };
+  datalayerCache.configure({
+    full_node_host: config.FULL_NODE_HOST,
+    datalayer_host: config.DATALAYER_HOST,
+    wallet_host: config.WALLET_HOST,
+    certificate_folder_path: config.CERTIFICATE_FOLDER_PATH,
+    default_wallet_id: config.DEFAULT_WALLET_ID,
+  });
 }
 
 app.get("/", async (req, res) => {
