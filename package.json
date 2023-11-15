@@ -1,6 +1,6 @@
 {
   "name": "chia-web2-gateway",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -19,13 +19,13 @@
     "chia-blockchain"
   ],
   "dependencies": {
-    "chia-datalayer-kv-cache": "^1.0.0",
+    "chia-datalayer-kv-cache": "^1.0.6",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
-    "superagent": "^8.0.9",
-    "winston": "^3.10.0",
+    "superagent": "^8.1.2",
+    "winston": "^3.11.0",
     "winston-daily-rotate-file": "^4.7.1",
     "yargs": "^17.7.2"
   }
