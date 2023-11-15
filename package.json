@@ -1,6 +1,6 @@
 {
   "name": "chia-web2-gateway",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -19,7 +19,7 @@
     "chia-blockchain"
   ],
   "dependencies": {
-    "chia-datalayer-kv-cache": "^1.0.6",
+    "chia-datalayer-kv-cache": "^1.0.7",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "js-yaml": "^4.1.0",
