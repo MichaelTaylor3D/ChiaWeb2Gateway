@@ -1,6 +1,6 @@
 {
   "name": "chia-web2-gateway",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "",
   "main": "index.js",
   "bin": {

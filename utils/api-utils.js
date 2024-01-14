@@ -108,6 +108,8 @@ const mimeTypes = {
   ".woff": "font/woff",
   ".woff2": "font/woff2",
   ".eot": "application/vnd.ms-fontobject",
+  ".yaml": "text/plain",
+  ".yml": "text/plain",
   // Include more MIME types as needed
 };
 
