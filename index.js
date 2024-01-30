@@ -186,6 +186,12 @@ app.get("/:storeId", async (req, res) => {
       id: storeId,
     });
 
+    if (dataLayerResponse.error) {
+      res.status(200).json({
+        error: dataLayerResponse.error,
+      });
+    }
+
     const apiResponse = dataLayerResponse.keys.map((key) =>
       hexUtils.decodeHex(key)
     );
