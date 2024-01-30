@@ -187,8 +187,8 @@ app.get("/:storeId", async (req, res) => {
     });
 
     if (dataLayerResponse.error) {
-      res.status(200).json({
-        error: dataLayerResponse.error,
+      res.status(400).json({
+        error: 'Store has no data',
       });
     }
 
